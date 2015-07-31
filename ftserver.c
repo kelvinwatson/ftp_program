@@ -1,16 +1,18 @@
-/* Programmed by: Kelvin Watson
+/* PROGRAMMED BY: Kelvin Watson
  * OSU ID: 932540242
  * ONID: watsokel
- * FileName: ftserver.c
- * Description: CS372 Assignment 2: Server for 2-connection client-server network
+ * FILENAME: ftserver.c
+ * DESCRIPTION: CS372 Assignment 2: Server for 2-connection client-server network
  * application that performs simple file transfer. See README.txt for instructions on 
  * compilation and execution.
- * Code Sources: http://stackoverflow.com/questions/12489/how-do-you-get-a-directory-listing-in-c
+ * CODE SOURCES: http://stackoverflow.com/questions/12489/how-do-you-get-a-directory-listing-in-c
+ * http://pubs.opengroup.org/onlinepubs/007908775/xsh/dirent.h.html
+ * http://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
  * http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
  * http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html
  * http://cboard.cprogramming.com/c-programming/98138-fflush-stdout.html
  */
-
+#include <assert.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -122,17 +124,56 @@ int main(int argc, char* argv[]){
                     strcpy(response,receiveMessage(response,connectionSocket,startTime));      
 
                     if(!strncmp(response,"-l",2)){
-                        printf("-l received. DATA CONNECTION CLOSED.");
+                        printf("-l received. DATA CONNECTION CLOSED.");fflush(stdout);
                         printf("Response was %s",response); fflush(stdout);
                         waitForConnection = 1;
-                        //print the list of files and return to waiting for connections
-                        fflush(stdout);
-                        char *listAck = "-l acknowledged\n"; 
-                        int listAckLen=strlen(listAck);
-                        if (sendAll(connectionSocket, listAck, &listAckLen) == -1) {
+                        /*print the list of files and return to waiting for connections*/
+                        DIR *directory;
+                        struct dirent *entry;
+                        int tempLen=0, existingLen=0;
+                        char* currentFileNames = NULL;
+                        char* existingFileNames = NULL;
+                        if ((directory = opendir (".")) != NULL) {
+                          /* print all the files and directories within directory */
+                            while ((entry = readdir (directory)) != NULL) {
+                                printf ("%s\n", entry->d_name);
+                                tempLen = strlen(entry->d_name+1);               //additional char for comma delimiter
+                                char *tempFileName = (char*)malloc(tempLen);
+                                strcpy(tempFileName,entry->d_name);
+                                tempFileName[tempLen+1]=',';                      //replace null terminator with comma
+                                if(!existingFileNames){                         //first round
+                                    existingFileNames = (char*)malloc(tempLen);
+                                    assert(existingFileNames);
+                                    strcpy(existingFileNames,tempFileName);
+                                } else{                                         //subsequent rounds
+                                    int existingLen = strlen(existingFileNames);
+                                    char* tempExistingFileNames = (char*)malloc(existingLen);
+                                    strcpy(tempExistingFileNames,existingFileNames);
+                                    free(existingFileNames);
+                                    existingFileNames = (char*)malloc(tempLen+existingLen); //reallocate
+                                    strcpy(existingFileNames,tempExistingFileNames);
+                                    free(tempExistingFileNames);
+                                    strcat(existingFileNames,tempFileName);
+                                }    
+                            }
+                            closedir (directory);
+                        } else {
+                          perror (""); /*Unable to open directory for reading*/
+                          return EXIT_FAILURE;
+                        }
+                        int finalExistingFileNamesLen = ((int)strlen(existingFileNames)) +1;
+                        char* finalExistingFileNames = (char*)malloc(finalExistingFileNamesLen);
+                        strcpy(finalExistingFileNames,existingFileNames);
+                        //free(existingFileNames);
+                        //existingFileNames[totalFileNamesLen] = '\n';
+                        strcat(finalExistingFileNames,"\n");
+                        if (sendAll(connectionSocket, finalExistingFileNames, &finalExistingFileNamesLen) == -1) {
                             perror("sendall");
-                            printf("We only sent %d bytes because of the error!\n", listAckLen);
-                        } else printf("-l acknowl send successfull"); fflush(stdout);
+                            printf("We only sent %d bytes because of the error!\n", finalExistingFileNamesLen);
+                        }
+                        //free(existingFileNames);
+                        //free(finalExistingFileNames);
+                        close(connectionSocket);
                         break;
                     }
 
@@ -159,13 +200,14 @@ int main(int argc, char* argv[]){
 
                     else{
                         printf("invalid command! Sending ERROR message to client"); fflush(stdout);
+                        waitForConnection=1;
                         char *errMsg = "ERROR: Invalid Command\n"; 
                         int errMsgLen=strlen(errMsg);
                         if (sendAll(connectionSocket, errMsg, &errMsgLen) == -1) {
                             perror("sendall");
                             printf("We only sent %d bytes because of the error!\n", errMsgLen);
                         } else printf("ERR acknowl send successfull"); fflush(stdout);
-                        continue;
+                        break;
                     }
                         
                     /*char* fGetsStatus = fgets(input, MESSAGE_SIZE, stdin); //truncates string to the input length, PLACES NULL TERMINATOR FOR YOU

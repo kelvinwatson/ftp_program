@@ -16,8 +16,10 @@ import java.util.Scanner;
 public class FTPClient {  
     public String hostName;
     public int portNumber;
+    public int dataPortNumber;
     public String prompt;
-    public String command;
+    public String controlCommand;
+    public String requestedFileName;
     public String message;
     public String response;
     public String handleMsg;
@@ -37,7 +39,7 @@ public class FTPClient {
       outToServer = null;
       inFromServer = null;
       clientSocket = null;
-      command = "";
+      controlCommand = "";
       prompt = "\nPlease enter either -l or -g <FILENAME>: ";
     }
 
@@ -49,7 +51,7 @@ public class FTPClient {
         System.out.println("\n\nFILE TRANFSER SYSTEM (CLIENT)");
         System.out.println("Programmed by Kelvin Watson, OSU ID 932540242, onid: watsokel)");
         System.out.println("**************************************************************");
-        System.out.println("CONTROL CONNECTION ESTABLISHED. Welcome to Simple File Transfer.");
+        System.out.println(">>CONTROL CONNECTION ESTABLISHED AND COMMAND RECOGNIZED.");
     }
 
     /*Method for creating client socket and buffers
@@ -76,10 +78,10 @@ public class FTPClient {
     *Pre-conditions: client must have established TCP connection with server
     *Post-conditions: client socket and buffers allocated
     */
-    public String sendCommand(){
+    public String sendCommand(String command){
       try{ 
-        System.out.print(prompt);
-        command = inFromUser.readLine();
+        //System.out.print(prompt);
+        //command = inFromUser.readLine();
         outToServer.writeBytes(command); 
         if(command.startsWith("-l")){
           return "-l";
@@ -105,11 +107,15 @@ public class FTPClient {
     public String receiveMessage(){
       System.out.println("in receiveMessage");
       try{
-        response = inFromServer.readLine();
-      }catch(IOException e){
+        while ((response = inFromServer.readLine())!= null) {
+          System.out.println(response);
+        clientSocket.close();
+
+        }
+        clientSocket.close();
+      } catch(IOException e){
         System.err.println("Caught IOException in inFromServer.readLine(): " + e.getMessage());
       }
-      System.out.println(response);
       return "RECEIVED";
     }
 }
