@@ -21,7 +21,6 @@ public class FTPClient {
     public String controlCommand;
     public String requestedFileName;
     public String message;
-    public String response;
     public String handleMsg;
     public String lengthStr;
     public BufferedReader inFromUser;
@@ -80,8 +79,6 @@ public class FTPClient {
     */
     public String sendCommand(String command){
       try{ 
-        //System.out.print(prompt);
-        //command = inFromUser.readLine();
         outToServer.writeBytes(command); 
         if(command.startsWith("-l")){
           return "-l";
@@ -90,10 +87,8 @@ public class FTPClient {
           return "-g";
         }
         else{
-          //invalid command
           return "ERR";
         }
-        //parse and validate command
       } catch(IOException e){
         System.err.println("Caught IOException in sendCommand(): " + e.getMessage());
       } 
@@ -105,17 +100,39 @@ public class FTPClient {
     *Post-conditions: client socket and buffers allocated
     */
     public String receiveMessage(){
+      String response = "";
       System.out.println("in receiveMessage");
       try{
         while ((response = inFromServer.readLine())!= null) {
           System.out.println(response);
-        clientSocket.close();
-
+          clientSocket.close();
         }
-        clientSocket.close();
       } catch(IOException e){
-        System.err.println("Caught IOException in inFromServer.readLine(): " + e.getMessage());
+        //Socket may already be closed
+        //System.err.println(e); 
       }
-      return "RECEIVED";
+      return response;
     }
+
+    public String replaceDelimiter(String original){
+      if(original != null && !original.isEmpty()) {
+        return original.replace(',', '\n');
+      } return null;
+    }
+
+    public void displayFileList(){
+      String sendAction = sendCommand(controlCommand); //returns either -l, -g, or ERR so client knows what to expect
+      String message = receiveMessage(); //server should send an acknowledgement or ERROR
+      replaceDelimiter(message);
+    }
+
+    public void getFile(){
+      String sendAction = sendCommand(controlCommand + " " + requestedFileName + "\n"); //returns either -l, -g, or ERR so client knows what to expect
+      System.out.println("in GET file");
+      String message = receiveMessage(); //server should send an acknowledgement or ERROR
+      System.out.println(message);
+    }
+
+
+
 }

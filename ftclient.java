@@ -43,10 +43,13 @@ public class ftclient{
     try{
       client.initiateContact();          
       client.printTitle();
-      String sendAction = client.sendCommand(client.controlCommand); //returns either -l, -g, or ERR so client knows what to expect
-      String receiveAction = client.receiveMessage(); //server should send an acknowledgement or ERROR
-      System.out.println("BACK IN MAIN!");
-
+      if(client.controlCommand.equals("-l")){
+        client.displayFileList();
+      }
+      else if(client.controlCommand.equals("-g")){
+        client.getFile();
+      }
+      System.out.println("BACK IN MAIN!");  
     /*  do{
         String sendAction = client.sendCommand(client.controlCommand); //returns either -l, -g, or ERR so client knows what to expect
         String receiveAction = client.receiveMessage(); //server should send an acknowledgement or ERROR

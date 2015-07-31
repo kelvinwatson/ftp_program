@@ -28,6 +28,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/time.h>
 
 #define BACKLOG 10     // how many pending connections queue will hold
 #define HANDLE_SIZE 11
@@ -36,7 +37,7 @@
 
 void signalHandler(int);
 int sendAll(int,char*,int*);
-char* receiveMessage(char*,int,size_t);
+char* receiveMessage(char*,int);
 void sendMessage(char*,char*,int,size_t);
 char* startUp(int,char**);
 
@@ -106,22 +107,23 @@ int main(int argc, char* argv[]){
         
         while(1) {  // main accept() loop
             sin_size = sizeof clientAddr;
+            printf("IN THE ACCEPT LOOP");fflush(stdout);
             connectionSocket = accept(welcomeSocket, (struct sockaddr *)&clientAddr, &sin_size);        /*open a connection socket*/
             fcntl(connectionSocket, F_SETFL, O_NONBLOCK);
             if(connectionSocket == -1) {
                 perror("accept");
                 continue;
             }
-            clock_t startTime;
-            int child;
-            if((child=fork())<0){ 
-                perror("Fork Error");
-                close(welcomeSocket);
-                exit(-1);
-            }
-            if(child==0) {
+            //int child;
+            //if((child=fork())<0){ 
+            //    perror("Fork Error");
+            //    close(welcomeSocket);
+            //    exit(-1);
+            //}
+            //if(child==0) {
                 while(1){ 
-                    strcpy(response,receiveMessage(response,connectionSocket,startTime));      
+                    strcpy(response,receiveMessage(response,connectionSocket));      
+                    printf("response truncated?=%s",response);fflush(stdout);
 
                     if(!strncmp(response,"-l",2)){
                         printf("-l received. DATA CONNECTION CLOSED.");fflush(stdout);
@@ -131,14 +133,73 @@ int main(int argc, char* argv[]){
                         DIR *directory;
                         struct dirent *entry;
                         int tempLen=0, existingLen=0;
-                        char* currentFileNames = NULL;
                         char* existingFileNames = NULL;
                         if ((directory = opendir (".")) != NULL) {
                           /* print all the files and directories within directory */
                             while ((entry = readdir (directory)) != NULL) {
                                 printf ("%s\n", entry->d_name);
+                                tempLen = strlen(entry->d_name)+2;
+                                printf("tempLen = %d\n",tempLen);               //additional char for comma delimiter
+                                char *tempFileName = (char*)malloc(tempLen);
+                                strcpy(tempFileName,entry->d_name);
+                                strcat(tempFileName,",");
+                                printf("tempFileName = %s\n",tempFileName);                      //replace null terminator with comma
+                                if(!existingFileNames){                         //first round
+                                    existingFileNames = (char*)malloc(tempLen+1);
+                                    assert(existingFileNames);
+                                    strcpy(existingFileNames,tempFileName);
+                                } else{                                         //subsequent rounds
+                                    printf("existingFileNames = %s\n",existingFileNames);
+                                    int existingLen = strlen(existingFileNames);
+                                    char* tempExistingFileNames = (char*)malloc(existingLen+2);
+                                    strcpy(tempExistingFileNames,existingFileNames);
+                                    free(existingFileNames);
+                                    existingFileNames = (char*)malloc(tempLen+existingLen+2); //reallocate
+                                    strcpy(existingFileNames,tempExistingFileNames);
+                                    free(tempExistingFileNames);
+                                    strcat(existingFileNames,tempFileName);
+                                } 
+                                free(tempFileName);   
+                            }
+                            closedir (directory);
+                        } else {
+                          perror (""); /*Unable to open directory for reading*/
+                          return EXIT_FAILURE;
+                        }
+                        int finalExistingFileNamesLen = ((int)strlen(existingFileNames)) +1;
+                        char* finalExistingFileNames = (char*)malloc(finalExistingFileNamesLen+2);
+                        strcpy(finalExistingFileNames,existingFileNames);
+                        strcat(finalExistingFileNames,"\n");
+                        if (sendAll(connectionSocket, finalExistingFileNames, &finalExistingFileNamesLen) == -1) {
+                            perror("sendall");
+                            printf("We only sent %d bytes because of the error!\n", finalExistingFileNamesLen);
+                        }
+                        free(existingFileNames);
+                        free(finalExistingFileNames);
+                        //close(connectionSocket);
+                        break;
+                    }
+
+                    if(!strncmp(response,"-g",2)){
+                        printf("-g received. DATA CONNECTION CLOSED.");fflush(stdout);
+                        printf("Response was %s",response); fflush(stdout);
+                        waitForConnection = 1;
+                        /*print the list of files and return to waiting for connections*/
+                        char *requestedFileName = response;
+                        requestedFileName += 4;
+                        printf("%s", requestedFileName);
+                        int requestedFileNameLen = strlen(requestedFileName);
+                        /*DIR *directory;
+                        struct dirent *entry;
+                        int tempLen=0, existingLen=0;
+                        char* currentFileNames = NULL;
+                        char* existingFileNames = NULL;
+                        if ((directory = opendir (".")) != NULL) {
+                            while ((entry = readdir (directory)) != NULL) {
+                                printf ("%s\n", entry->d_name);
                                 tempLen = strlen(entry->d_name+1);               //additional char for comma delimiter
                                 char *tempFileName = (char*)malloc(tempLen);
+                                assert(tempFileName);
                                 strcpy(tempFileName,entry->d_name);
                                 tempFileName[tempLen+1]=',';                      //replace null terminator with comma
                                 if(!existingFileNames){                         //first round
@@ -148,9 +209,11 @@ int main(int argc, char* argv[]){
                                 } else{                                         //subsequent rounds
                                     int existingLen = strlen(existingFileNames);
                                     char* tempExistingFileNames = (char*)malloc(existingLen);
+                                    assert(tempExistingFileNames);
                                     strcpy(tempExistingFileNames,existingFileNames);
                                     free(existingFileNames);
                                     existingFileNames = (char*)malloc(tempLen+existingLen); //reallocate
+                                    assert(existingFileNames);
                                     strcpy(existingFileNames,tempExistingFileNames);
                                     free(tempExistingFileNames);
                                     strcat(existingFileNames,tempFileName);
@@ -158,31 +221,29 @@ int main(int argc, char* argv[]){
                             }
                             closedir (directory);
                         } else {
-                          perror (""); /*Unable to open directory for reading*/
+                          perror ("");
                           return EXIT_FAILURE;
                         }
                         int finalExistingFileNamesLen = ((int)strlen(existingFileNames)) +1;
                         char* finalExistingFileNames = (char*)malloc(finalExistingFileNamesLen);
                         strcpy(finalExistingFileNames,existingFileNames);
-                        //free(existingFileNames);
-                        //existingFileNames[totalFileNamesLen] = '\n';
-                        strcat(finalExistingFileNames,"\n");
-                        if (sendAll(connectionSocket, finalExistingFileNames, &finalExistingFileNamesLen) == -1) {
+                        strcat(finalExistingFileNames,"\n");*/
+                        if (sendAll(connectionSocket, requestedFileName, &requestedFileNameLen) == -1) {
                             perror("sendall");
-                            printf("We only sent %d bytes because of the error!\n", finalExistingFileNamesLen);
+                            printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
                         }
                         //free(existingFileNames);
                         //free(finalExistingFileNames);
-                        close(connectionSocket);
+                        //close(connectionSocket);
                         break;
                     }
 
-                    if(!strncmp(response,"-g",2)){
-                        printf("-g received. DATA CONNECTION CLOSED."); fflush(stdout);
+
+/*                    if(!strncmp(response,"-g",2)){
+                        printf(" -- OK SO -g received. DATA CONNECTION WILL BE CLOSED AFTER TRANFSER."); fflush(stdout);
                         printf("Response was %s",response); fflush(stdout);
                         waitForConnection=1;
                         //parse the filename out and check if it is in the directory
-                        fflush(stdout);
                         char *gAck = "-g acknowledged\n"; 
                         int gAckLen=strlen(gAck);
                         if (sendAll(connectionSocket, gAck, &gAckLen) == -1) {
@@ -191,13 +252,17 @@ int main(int argc, char* argv[]){
                         } else {
                             printf("-g acknowl send successfull"); fflush(stdout);
                         }
+                        //close(connectionSocket);
                         break; 
-                    }  
+                    }  */
 
+                    else{
+                        printf("invalid command received"); fflush(stdout);
+                    }
                     //printf("%s",response); //leaving this here as a test to ensure command received from client
                     //fflush(stdout);
 
-
+/*
                     else{
                         printf("invalid command! Sending ERROR message to client"); fflush(stdout);
                         waitForConnection=1;
@@ -208,7 +273,7 @@ int main(int argc, char* argv[]){
                             printf("We only sent %d bytes because of the error!\n", errMsgLen);
                         } else printf("ERR acknowl send successfull"); fflush(stdout);
                         break;
-                    }
+                    } */
                         
                     /*char* fGetsStatus = fgets(input, MESSAGE_SIZE, stdin); //truncates string to the input length, PLACES NULL TERMINATOR FOR YOU
                     if((strncmp(input,"\\quit",5))==0){
@@ -225,15 +290,15 @@ int main(int argc, char* argv[]){
                     //sendMessage(input,handle,connectionSocket,handleLen);
                 }
                 if(waitForConnection==1){
-                    printf("Ready and waiting for new client connections on port %s...\n",portNumber);
                     close(connectionSocket);
+                    printf("Ready and waiting for new client connections on port %s...\n",portNumber);                  
                     break;
                 }
                 else{
                     printf("closing connection");
                     close(connectionSocket);
                 }
-            }
+            //}
         } continue;
     }
     return 0;
@@ -280,7 +345,9 @@ int sendAll(int s, char *buf, int *len){
  * Preconditions: TCP connection must be established between client and server
  * Postconditions: returns the response string to main
  */
-char* receiveMessage(char* resp,int cSocket,size_t startTime){
+char* receiveMessage(char* resp,int cSocket){
+    struct timeval currTime, startTime;
+    printf("in receive\n");fflush(stdout);
     int transferStarted = 0, charsRecv;
     char chunk[MESSAGE_SIZE];
     memset(resp,0,MESSAGE_SIZE);
@@ -290,14 +357,18 @@ char* receiveMessage(char* resp,int cSocket,size_t startTime){
         if(charsRecv==0){
         }
         else if(charsRecv > 0){ //receive success 
+            printf("charsRecv>0"); fflush(stdout);
             if(transferStarted == 0) {
-                startTime = clock();
+                gettimeofday(&startTime, NULL);
+                printf("startTime=%f",startTime); fflush(stdout);    
                 transferStarted = 1;
             }
             strcat(resp,chunk);
         }
         else if(charsRecv < 0 && transferStarted == 1) {
-            if((clock() - startTime) > 1000) {
+            gettimeofday(&currTime, NULL);
+            printf("took %lu\n", currTime.tv_usec - startTime.tv_usec);fflush(stdout);    
+            if((currTime.tv_usec - startTime.tv_usec) > 1000) {
                 transferStarted = 0;
                 break;    
             }
