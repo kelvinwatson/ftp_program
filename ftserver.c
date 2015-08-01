@@ -36,7 +36,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define BACKLOG 10     // how many pending connections queue will hold
+#define BACKLOG 10
 #define HANDLE_SIZE 11
 #define MESSAGE_SIZE 500
 #define CLEARBUFFER() char ch; while ((ch = getchar()) != '\n' && ch != EOF);
@@ -74,11 +74,6 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    /*char handle[] = "server> ";
-    size_t handleLen = strlen(handle);
-    printf("\nYour handle is %s",handle);
-    fflush(stdout);*/
-
     for(p = serverInfo; p != NULL; p = p->ai_next) {
         if ((welcomeSocket = socket(p->ai_family, p->ai_socktype,
                 p->ai_protocol)) == -1) {
@@ -104,7 +99,7 @@ int main(int argc, char* argv[]){
             perror("listen");
             exit(1);
         }
-        sa.sa_handler = signalHandler; // reap all dead processes
+        sa.sa_handler = signalHandler;
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = SA_RESTART;
         if (sigaction(SIGCHLD, &sa, NULL) == -1) {
@@ -121,7 +116,7 @@ int main(int argc, char* argv[]){
         
         while(1) {  //Accept Loop
             sin_size = sizeof clientAddr;
-            printf("IN THE ACCEPT LOOP");fflush(stdout);
+            //printf("IN THE ACCEPT LOOP");fflush(stdout);
             connectionSocket = accept(welcomeSocket, (struct sockaddr *)&clientAddr, &sin_size);        /*open a connection socket*/
             fcntl(connectionSocket, F_SETFL, O_NONBLOCK);
             if(connectionSocket == -1) {
@@ -130,33 +125,38 @@ int main(int argc, char* argv[]){
             }
             while(1){ 
                 strcpy(response,receiveMessage(response,connectionSocket));      
-                printf("response truncated?=%s",response);fflush(stdout);
+                //printf("response truncated?=%s",response);fflush(stdout);
 
                 if(!strncmp(response,"-l",2)){
-                    printf("-l received. DATA CONNECTION CLOSED.");fflush(stdout);
-                    printf("Response was %s",response); fflush(stdout);
+                    printf("\n------------------------------------------------------");
+                    fflush(stdout);
+                    printf("\n-l (list) command received from client");
+                    fflush(stdout);
+                    printf("\nSending names of files in current directory to client.");
+                    fflush(stdout);
+                    printf("\n------------------------------------------------------");
+                    fflush(stdout);
+                    //printf("Response was %s",response); fflush(stdout);
                     waitForConnection = 1;
-                    /*print the list of files and return to waiting for connections*/
                     DIR *directory;
                     struct dirent *entry;
                     int tempLen=0, existingLen=0;
                     char* existingFileNames = NULL;
                     if ((directory = opendir (".")) != NULL) {
-                      /* print all the files and directories within directory */
                         while ((entry = readdir (directory)) != NULL) {
-                            printf ("%s\n", entry->d_name);
+                            //printf ("%s\n", entry->d_name);
                             tempLen = strlen(entry->d_name)+2;
-                            printf("tempLen = %d\n",tempLen);               //additional char for comma delimiter
+                            //printf("tempLen = %d\n",tempLen);               //additional char for comma delimiter
                             char *tempFileName = (char*)malloc(tempLen);
                             strcpy(tempFileName,entry->d_name);
                             strcat(tempFileName,",");
-                            printf("tempFileName = %s\n",tempFileName);                      //replace null terminator with comma
+                            //printf("tempFileName = %s\n",tempFileName);     //replace null terminator with comma
                             if(!existingFileNames){                         //first round
                                 existingFileNames = (char*)malloc(tempLen+1);
                                 assert(existingFileNames);
                                 strcpy(existingFileNames,tempFileName);
                             } else{                                         //subsequent rounds
-                                printf("existingFileNames = %s\n",existingFileNames);
+                                //printf("existingFileNames = %s\n",existingFileNames);
                                 int existingLen = strlen(existingFileNames);
                                 char* tempExistingFileNames = (char*)malloc(existingLen+2);
                                 strcpy(tempExistingFileNames,existingFileNames);
@@ -184,27 +184,26 @@ int main(int argc, char* argv[]){
                     }
                     free(existingFileNames);
                     free(finalExistingFileNames);
-                    //close(connectionSocket);
                     break;
                 }
 
                 if(!strncmp(response,"-g",2)){
                     waitForConnection = 1;
                     int responseLen = strlen(response);
-                    printf("responseLen=%d\n",responseLen);fflush(stdout);
+                    //printf("responseLen=%d\n",responseLen);fflush(stdout);
                     char* dataPortString = &response[responseLen-6];
-                    printf("dataPortString=%s",dataPortString);fflush(stdout);
+                    //printf("dataPortString=%s",dataPortString);fflush(stdout);
                     unsigned short int dataPortNumber = atoi(dataPortString);
-                    printf("dataPortNumber=%d",dataPortNumber);fflush(stdout);
+                    //printf("dataPortNumber=%d",dataPortNumber);fflush(stdout);
                     response[responseLen-6] = '\0';
                     char *requestedFileName = response;
                     requestedFileName += 3;
-                    printf("  requestedFileName=%s", requestedFileName);
+                    //printf("  requestedFileName=%s", requestedFileName);
                     int requestedFileNameLen = (int)strlen(requestedFileName);
-                    printf("strlen of requestedFileName=%d\n",requestedFileNameLen);
+                    //printf("strlen of requestedFileName=%d\n",requestedFileNameLen);
                     requestedFileName[requestedFileNameLen-1] = '\0'; //replace the space with null
                     requestedFileNameLen = (int)strlen(requestedFileName);
-                    printf("new strlen of requestedFileName=%d\n",requestedFileNameLen); //success
+                    //printf("new strlen of requestedFileName=%d\n",requestedFileNameLen); //success
                     
                     /*Establish data connection with client*/
                     /*printf("%d.%d.%d.%d\n", (int)(clientAddr.sin_addr.s_addr&0xFF),
@@ -212,35 +211,7 @@ int main(int argc, char* argv[]){
                       (int)((clientAddr.sin_addr.s_addr&0xFF0000)>>16),
                       (int)((clientAddr.sin_addr.s_addr&0xFF000000)>>24));*/
 
-
                     int dataSocket = establishDataConnection(clientAddr);
-
-                    /*int IP1 = (int)(clientAddr.sin_addr.s_addr&0xFF);
-                    int IP2 = (int)((clientAddr.sin_addr.s_addr&0xFF00)>>8);
-                    int IP3 = (int)((clientAddr.sin_addr.s_addr&0xFF0000)>>16);
-                    int IP4 = (int)((clientAddr.sin_addr.s_addr&0xFF000000)>>24);                        
-                    char connectToIP[15];
-                    int numCharsWritten = sprintf(connectToIP,"%d.%d.%d.%d",IP1,IP2,IP3,IP4);
-                    printf("numCharsWritten=%d, IPAddress=%s",numCharsWritten,connectToIP);
-                    
-                    struct addrinfo hints2, *res2;
-                    int dataSocket,connectStatus;
-                    // first, load up address structs with getaddrinfo():
-                    memset(&hints2, 0, sizeof hints2);
-                    hints2.ai_family = AF_UNSPEC;
-                    hints2.ai_socktype = SOCK_STREAM;
-                    getaddrinfo(connectToIP, "30026", &hints2, &res2);
-                    printf("TESTING");
-                    if((dataSocket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol))==-1){
-                        perror("client: socket");
-                    } 
-                    printf("dataSocket=%d\n",dataSocket);
-                    if((connectStatus = connect(dataSocket, res2->ai_addr, res2->ai_addrlen)) == -1){
-                        close(dataSocket);
-                        printf("%d",errno);
-                        perror("client: connect");
-                    }
-                    printf("connectStatus=%d\n",connectStatus);*/
                     
                     DIR *directory;
                     struct dirent *entry;
@@ -249,7 +220,13 @@ int main(int argc, char* argv[]){
                     if ((directory = opendir (".")) != NULL) {
                         while ((entry = readdir (directory)) != NULL) {
                             if(strcmp(entry->d_name,requestedFileName)==0){//file found!
-                                printf("FILE FOUND!");
+                                printf("\n------------------------------------------");
+                                fflush(stdout);
+                                printf("\n-g (get) command received from client.");
+                                fflush(stdout);
+                                printf("\nFILE FOUND! Transferring file to client.");
+                                fflush(stdout);
+                                printf("\n------------------------------------------");
                                 fflush(stdout);
                                 fileData = getFileData(requestedFileName,&fileByteSize);
                                 break;
@@ -257,6 +234,14 @@ int main(int argc, char* argv[]){
                         }
                         closedir(directory);
                         if(!fileData){
+                            printf("\n--------------------------------------");
+                            fflush(stdout);
+                            printf("\n-g (get) command received from client.");
+                            fflush(stdout);
+                            printf("\nFILE NOT FOUND!");
+                            fflush(stdout);
+                            printf("\n--------------------------------------");
+                            fflush(stdout); 
                             char fileNotFound[] = "ERROR: FILE NOT FOUND. Exiting.";
                             sendData(dataSocket,fileNotFound);
                             break;
@@ -267,7 +252,7 @@ int main(int argc, char* argv[]){
                     }
                     strcat(fileData, "\x1A");                        
 
-                    printf("fileByteSize%d=",fileByteSize);
+                    //printf("fileByteSize%d=",fileByteSize);
                     if (sendAll(dataSocket, fileData, &fileByteSize) == -1) {
                         perror("sendall");
                         printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
@@ -281,7 +266,7 @@ int main(int argc, char* argv[]){
             }
             if(waitForConnection==1){
                 close(connectionSocket);
-                printf("Ready and waiting for new client connections on port %s...\n",portNumber);                  
+                //printf("\nReady and waiting for new client connections on port %s...\n",portNumber);                  
                 break;
             }
             else{
@@ -336,7 +321,7 @@ int sendAll(int s, char *buf, int *len){
  */
 char* receiveMessage(char* resp,int cSocket){
     struct timeval currTime, startTime;
-    printf("in receive\n");fflush(stdout);
+    //printf("in receive\n");fflush(stdout);
     int transferStarted = 0, charsRecv;
     char chunk[MESSAGE_SIZE];
     memset(resp,0,MESSAGE_SIZE);
@@ -346,17 +331,17 @@ char* receiveMessage(char* resp,int cSocket){
         if(charsRecv==0){
         }
         else if(charsRecv > 0){ //receive success 
-            printf("charsRecv>0"); fflush(stdout);
+            //printf("charsRecv>0"); fflush(stdout);
             if(transferStarted == 0) {
                 gettimeofday(&startTime, NULL);
-                printf("startTime=%f",startTime); fflush(stdout);    
+                //printf("startTime=%f",startTime); fflush(stdout);    
                 transferStarted = 1;
             }
             strcat(resp,chunk);
         }
         else if(charsRecv < 0 && transferStarted == 1) {
             gettimeofday(&currTime, NULL);
-            printf("took %lu\n", currTime.tv_usec - startTime.tv_usec);fflush(stdout);    
+            //printf("took %lu\n", currTime.tv_usec - startTime.tv_usec);fflush(stdout);    
             if((currTime.tv_usec - startTime.tv_usec) > 1000) {
                 transferStarted = 0;
                 break;    
@@ -426,7 +411,7 @@ int establishDataConnection(struct sockaddr_in clientAddr){
     int IP4 = (int)((clientAddr.sin_addr.s_addr&0xFF000000)>>24);                        
     char connectToIP[15];
     int numCharsWritten = sprintf(connectToIP,"%d.%d.%d.%d",IP1,IP2,IP3,IP4);
-    printf("numCharsWritten=%d, IPAddress=%s",numCharsWritten,connectToIP);
+    //printf("numCharsWritten=%d, IPAddress=%s",numCharsWritten,connectToIP);
 
     struct addrinfo hints2, *res2;
     int dataSocket,connectStatus;
@@ -435,17 +420,17 @@ int establishDataConnection(struct sockaddr_in clientAddr){
     hints2.ai_family = AF_UNSPEC;
     hints2.ai_socktype = SOCK_STREAM;
     getaddrinfo(connectToIP, "30026", &hints2, &res2);
-    printf("TESTING");
+    //printf("TESTING");
     if((dataSocket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol))==-1){
         perror("client: socket");
     } 
-    printf("dataSocket=%d\n",dataSocket);
+    //printf("dataSocket=%d\n",dataSocket);
     if((connectStatus = connect(dataSocket, res2->ai_addr, res2->ai_addrlen)) == -1){
         close(dataSocket);
         printf("%d",errno);
         perror("client: connect");
     }
-    printf("YESSSconnectStatus=%d\n",connectStatus);
+    //printf("ConnectStatus=%d\n",connectStatus);
     return dataSocket;
 }
 
@@ -460,7 +445,7 @@ char* getFileData(const char* requestedFileName,int* fileByteSize){
     }
     fseek (ifp,0,SEEK_END);
     (*fileByteSize) = ftell(ifp);
-    printf("fileByteSize=%d",(*fileByteSize));
+    //printf("fileByteSize=%d",(*fileByteSize));
     rewind(ifp);/*determine file size */
     char* fileData = (char*)malloc(sizeof(char)* (*fileByteSize) );
     if (!fileData) {
@@ -478,7 +463,7 @@ char* getFileData(const char* requestedFileName,int* fileByteSize){
 
 void sendData(const int dataSocket,char* message){
     int messageLen = (int)strlen(message); 
-    printf("message=%s,messageLen=%d\n",message,messageLen);
+    //printf("message=%s,messageLen=%d\n",message,messageLen);
     fflush(stdout);
     if (sendAll(dataSocket, message, &messageLen) == -1) {
         perror("sendall");
