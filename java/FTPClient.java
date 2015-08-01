@@ -27,7 +27,9 @@ public class FTPClient {
     public DataOutputStream outToServer;
     public BufferedReader inFromServer;
     public Socket clientSocket;
-
+    public ServerSocket welcomeSocket;
+    public Socket dataSocket;
+    public BufferedReader fileDataFromServer;
     /*Default constructor
     *Pre-conditions: none
     *Post-conditions: initializes lengthStr to empty string
@@ -126,21 +128,55 @@ public class FTPClient {
       String message = receiveMessage(); //server should send an acknowledgement or ERROR
       String fileList = replaceDelimiter(message);
       System.out.println(fileList);
-      try { 
-        clientSocket.close();
-      }catch(IOException e){
-        //System.err.println(e); 
-      }
+     
     }
 
     public void getFile(){
-      String sendAction = sendCommand(controlCommand + " " + requestedFileName + "\n"); //returns either -l, -g, or ERR so client knows what to expect
+      String sendAction = sendCommand(controlCommand + " " + requestedFileName + " " + dataPortNumber + "\n"); //returns either -l, -g, or ERR so client knows what to expect
       //check if file already exists in the current directory
       System.out.println("in GET file");
-      String message = receiveMessage(); //server should send an acknowledgement or ERROR
-      System.out.println(message);
+      //String message = receiveMessage(); //server should send an acknowledgement or ERROR
+      //System.out.println(message);
+      listenForDataConnection();
     }
 
+    public void listenForDataConnection(){
+      try{
+        String clientSentence;          
+        String capitalizedSentence;  
+        welcomeSocket = new ServerSocket(dataPortNumber);          
+        while(true){             
+          Socket connectionSocket = welcomeSocket.accept();             
+          BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));             
+          DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());             
+          clientSentence = inFromClient.readLine();             
+          System.out.println("Received: " + clientSentence);             
+          capitalizedSentence = clientSentence.toUpperCase() + '\n';             
+          outToClient.writeBytes(capitalizedSentence);          
+        }
+      }catch(IOException e){
 
+      }     
+      /*try{
+        welcomeSocket = new ServerSocket(dataPortNumber);
+        System.out.println("printing");
+        System.out.println("dataPortNumber is " + dataPortNumber);
+        System.out.println("waiting for server to establish connection for data transfer!");
+        dataSocket = welcomeSocket.accept();
+        System.out.println("CONNECTION ESTABLISHED");
+        fileDataFromServer = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
+        DataOutputStream outToClient = new DataOutputStream(dataSocket.getOutputStream());             
+        String resp = "";
+        try{
+          while ((resp = fileDataFromServer.readLine())!= null) {
+          }
+        } catch (IOException e){
+          System.err.println(e); 
+        }
+        System.out.println("printing response from Server " + resp);
+      } catch(IOException e){
+        System.err.println(e);  
+      }*/
+    }
 
 }

@@ -6,8 +6,11 @@
  * application that performs simple file transfer. See README.txt for instructions on 
  * compilation and execution.
  * CODE SOURCES: http://stackoverflow.com/questions/12489/how-do-you-get-a-directory-listing-in-c
+ * http://www.programminglogic.com/example-of-client-server-program-in-c-using-sockets-and-tcp/
+ * http://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
  * http://stackoverflow.com/questions/12722904/how-to-use-struct-timeval-to-get-the-execution-time
  * http://pubs.opengroup.org/onlinepubs/007908775/xsh/dirent.h.html
+ * http://stackoverflow.com/questions/5297248/how-to-compare-last-n-characters-of-a-string-to-another-string-in-c
  * http://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
  * http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
  * http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html
@@ -36,18 +39,23 @@
 #define MESSAGE_SIZE 500
 #define CLEARBUFFER() char ch; while ((ch = getchar()) != '\n' && ch != EOF);
 
+void *addr;
+
+struct sockaddr_in *ipv4;
+
 void signalHandler(int);
 int sendAll(int,char*,int*);
 char* receiveMessage(char*,int);
 void sendMessage(char*,char*,int,size_t);
 char* startUp(int,char**);
+void *get_in_addr(struct sockaddr *sa);
 
 int main(int argc, char* argv[]){
     char *portNumber = startUp(argc,argv);
 
     int status, welcomeSocket, connectionSocket, yes=1;  // listen on sock_fd, new connection on connectionSocket
     struct addrinfo hints, *serverInfo, *p;
-    struct sockaddr_storage clientAddr; // connector's address information
+    struct sockaddr_in clientAddr; // connector's address information
     socklen_t sin_size;
     struct sigaction sa;
     
@@ -61,10 +69,10 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    char handle[] = "server> ";
+    /*char handle[] = "server> ";
     size_t handleLen = strlen(handle);
     printf("\nYour handle is %s",handle);
-    fflush(stdout);
+    fflush(stdout);*/
 
     for(p = serverInfo; p != NULL; p = p->ai_next) {
         if ((welcomeSocket = socket(p->ai_family, p->ai_socktype,
@@ -186,56 +194,104 @@ int main(int argc, char* argv[]){
                         printf("Response was %s",response); fflush(stdout);
                         waitForConnection = 1;
                         /*print the list of files and return to waiting for connections*/
+                        int responseLen = strlen(response);
+                        printf("responseLen=%d\n",responseLen);fflush(stdout);
+                        char* dataPortString = &response[responseLen-6];
+                        //dataPortString[5]='\0';
+                        printf("dataPortString=%s",dataPortString);fflush(stdout);
+                        unsigned short int dataPortNumber = atoi(dataPortString);
+                        printf("dataPortNumber=%d",dataPortNumber);fflush(stdout);
+                        response[responseLen-6] = '\0';
                         char *requestedFileName = response;
                         requestedFileName += 3;
-                        printf("%s", requestedFileName);
-                        int requestedFileNameLen = strlen(requestedFileName);
+                        printf("  requestedFileName=%s", requestedFileName);
+                        int requestedFileNameLen = (int)strlen(requestedFileName);
+                        printf("strlen of requestedFileName=%d\n",requestedFileNameLen);
+                        requestedFileName[requestedFileNameLen-1] = '\0'; //replace the space with null
+                        requestedFileNameLen = (int)strlen(requestedFileName);
+                        printf("new strlen of requestedFileName=%d\n",requestedFileNameLen); //success
+                        
+
+                        //establish data connection with client
+                        printf("%d.%d.%d.%d\n", (int)(clientAddr.sin_addr.s_addr&0xFF),
+                          (int)((clientAddr.sin_addr.s_addr&0xFF00)>>8),
+                          (int)((clientAddr.sin_addr.s_addr&0xFF0000)>>16),
+                          (int)((clientAddr.sin_addr.s_addr&0xFF000000)>>24));
+
+                        int IP1 = (int)(clientAddr.sin_addr.s_addr&0xFF);
+                        int IP2 = (int)((clientAddr.sin_addr.s_addr&0xFF00)>>8);
+                        int IP3 = (int)((clientAddr.sin_addr.s_addr&0xFF0000)>>16);
+                        int IP4 = (int)((clientAddr.sin_addr.s_addr&0xFF000000)>>24);                        
+                        char connectToIP[15];
+                        int numCharsWritten = sprintf(connectToIP,"%d.%d.%d.%d",IP1,IP2,IP3,IP4);
+                        printf("numCharsWritten=%d, IPAddress=%s",numCharsWritten,connectToIP);
+                        
+                        /*struct sockaddr_in fileClientAddr;
+                        socklen_t addrSize;
+                        int dataSocket;
+                        if((dataSocket = socket(AF_INET, SOCK_STREAM, 0))==-1)
+                            perror("socket");
+                        printf("dataSocket=%d\n",dataSocket);
+                        inet_pton(AF_INET, connectToIP, &(fileClientAddr.sin_addr));
+                        fileClientAddr.sin_family = AF_INET;
+                        fileClientAddr.sin_port = htons(dataPortNumber);
+                        //fileClientAddr.sin_addr.s_addr = inet_addr(connectToIP);
+                        memset(fileClientAddr.sin_zero, '\0', sizeof(fileClientAddr.sin_zero)); 
+                        addrSize = sizeof(fileClientAddr);
+                        int status2 = connect(dataSocket, (struct sockaddr*)&fileClientAddr, addrSize);
+                        printf("status2=%d\n",status2);*/
+
+                        struct addrinfo hints2, *res2;
+                        int dataSocket,connectStatus;
+                        // first, load up address structs with getaddrinfo():
+                        memset(&hints2, 0, sizeof hints2);
+                        hints2.ai_family = AF_UNSPEC;
+                        hints2.ai_socktype = SOCK_STREAM;
+                        getaddrinfo(connectToIP, "30026", &hints2, &res2);
+                        printf("TESTING");
+                        // make a socket:
+                        if( (dataSocket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol))==-1){
+                            perror("client: socket");
+                        } 
+                        printf("dataSocket=%d\n",dataSocket);
+                        // connect!
+                        if( (connectStatus = connect(dataSocket, res2->ai_addr, res2->ai_addrlen)) == -1){
+                            close(dataSocket);
+                            printf("%d",errno);
+                            perror("client: connect");
+                        }
+                        printf("connectStatus=%d\n",connectStatus);
+                        
+                        //char* requestedFileName = "hello.txt";
+                        //int requestedFileNameLen = strlen(requestedFileName);
+                        /*if (sendAll(dataSocket, requestedFileName, &requestedFileNameLen) == -1) {
+                            perror("sendall");
+                            printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
+                        } */   
                         DIR *directory;
                         struct dirent *entry;
-                        /*int tempLen=0, existingLen=0;
-                        char* currentFileNames = NULL;
-                        char* existingFileNames = NULL;
                         if ((directory = opendir (".")) != NULL) {
                             while ((entry = readdir (directory)) != NULL) {
-                                printf ("%s\n", entry->d_name);
-                                tempLen = strlen(entry->d_name+1);               //additional char for comma delimiter
-                                char *tempFileName = (char*)malloc(tempLen);
-                                assert(tempFileName);
-                                strcpy(tempFileName,entry->d_name);
-                                tempFileName[tempLen+1]=',';                      //replace null terminator with comma
-                                if(!existingFileNames){                         //first round
-                                    existingFileNames = (char*)malloc(tempLen);
-                                    assert(existingFileNames);
-                                    strcpy(existingFileNames,tempFileName);
-                                } else{                                         //subsequent rounds
-                                    int existingLen = strlen(existingFileNames);
-                                    char* tempExistingFileNames = (char*)malloc(existingLen);
-                                    assert(tempExistingFileNames);
-                                    strcpy(tempExistingFileNames,existingFileNames);
-                                    free(existingFileNames);
-                                    existingFileNames = (char*)malloc(tempLen+existingLen); //reallocate
-                                    assert(existingFileNames);
-                                    strcpy(existingFileNames,tempExistingFileNames);
-                                    free(tempExistingFileNames);
-                                    strcat(existingFileNames,tempFileName);
-                                }    
+                                //printf ("%s\n", entry->d_name);
+                                if(strcmp(entry->d_name,requestedFileName)==0){//file found!
+                                    printf("FILE FOUND!");fflush(stdout);  
+                                } else continue;    
                             }
+                            //HANDLING FOR file not found
                             closedir (directory);
                         } else {
                           perror ("");
                           return EXIT_FAILURE;
                         }
-                        int finalExistingFileNamesLen = ((int)strlen(existingFileNames)) +1;
-                        char* finalExistingFileNames = (char*)malloc(finalExistingFileNamesLen);
-                        strcpy(finalExistingFileNames,existingFileNames);
-                        strcat(finalExistingFileNames,"\n");*/
-                        if (sendAll(connectionSocket, requestedFileName, &requestedFileNameLen) == -1) {
+                        /*APPEND A NEWLINE*/
+                        requestedFileName = "hello.txt\n";
+                        requestedFileNameLen = strlen(requestedFileName);
+                        printf("requesteFilenameLen%d=",requestedFileNameLen);
+                        if (sendAll(dataSocket, "hello.txt\n", &requestedFileNameLen) == -1) {
                             perror("sendall");
                             printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
                         }
-                        //free(existingFileNames);
-                        //free(finalExistingFileNames);
-                        //close(connectionSocket);
+                        //close(connectionSocket);*/
                         break;
                     }
 
@@ -419,4 +475,14 @@ char* startUp(int argC, char** argV){
     fflush(stdout);
     return argV[1];
     }
+}
+
+
+
+void *get_in_addr(struct sockaddr *sa){
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }

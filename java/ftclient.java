@@ -49,22 +49,12 @@ public class ftclient{
       else if(client.controlCommand.equals("-g")){
         client.getFile();
       }
-      System.out.println("BACK IN MAIN!");  
-    /*  do{
-        String sendAction = client.sendCommand(client.controlCommand); //returns either -l, -g, or ERR so client knows what to expect
-        String receiveAction = client.receiveMessage(); //server should send an acknowledgement or ERROR
-        System.out.println(receiveAction);
-        if(receiveAction=="ERROR: Invalid Command"){
-          System.out.println("I'm in the error block");
-        }
-        else{
-          System.out.println("I'm in the else block");
-        //receive the file or list from the user, server should signal if it's sending a list or file
-          String receiveAck = client.receiveMessage();
-          System.out.println(receiveAck); 
-          //return; 
-        }
-      }while(true);*/
+      System.out.println("BACK IN MAIN!"); 
+      try { 
+        client.clientSocket.close();
+      }catch(IOException e){
+        //System.err.println(e); 
+      } 
     } finally {
       System.out.print("\nThank you for using File Transfer.\n\n");
       System.exit(0);
