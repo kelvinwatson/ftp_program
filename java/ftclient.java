@@ -1,10 +1,10 @@
-/* Programmed by: Kelvin Watson
+/* PROGRAMMED BY: Kelvin Watson
  * OSU ID: 932540242
  * ONID: watsokel
- * FileName: chatclient.java
- * Description: Chat client for 2-way communication with a TCP chat server
- * http://stackoverflow.com/questions/10202515/reading-from-a-bufferedreader-readline-returns-null
- * Sources: https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
+ * FILENAME: chatclient.java
+ * DESCRIPTION: FTP client main function for 2-connection client-server file transfer application
+ * CODE SOURCES: http://stackoverflow.com/questions/10202515/reading-from-a-bufferedreader-readline-returns-null
+ * https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
  * http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
  */
 
@@ -18,9 +18,11 @@ public class ftclient{
 
     if(argv[0].equals("flip1") || argv[0].equals("128.193.54.226")){     /*validate arg[0]*/
       argv[0] = "flip1.engr.oregonstate.edu";
-    } else if(argv[0].equals("flip2") || argv[0].equals("128.193.54.7") ){
+    } else if(argv[0].equals("flip2") || argv[0].equals("128.193.54.7")){
       argv[0] = "flip2.engr.oregonstate.edu";
-    }
+    } else if(argv[0].equals("flip3") || argv[0].equals("128.193.54.10")){
+      argv[0] = "flip3.engr.oregonstate.edu";
+    } 
     client.hostName = argv[0];
     
     client.portNumber = Integer.parseInt(argv[1]);  /*save arg[1]*/

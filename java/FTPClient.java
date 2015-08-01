@@ -1,15 +1,13 @@
-/* Programmed by: Kelvin Watson
+/* PROGRAMMED BY: Kelvin Watson
  * OSU ID: 932540242
  * ONID: watsokel
- * FileName: TCPClient.java
- * Description: Methods required by the class chatclient.java for two-way 
- * communication with server program
- * Sources: https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
+ * FILENAME: chatclient.java
+ * DESCRIPTION: FTPClient class data members and methods required by ftclient.java
+ * CODE SOURCES: https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
  * http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
  * http://stackoverflow.com/questions/7771303/getting-the-character-returned-by-read-in-bufferedreader
  */
 
-//http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
 import java.io.*; 
 import java.net.*;
 import java.util.Scanner;
