@@ -6,6 +6,7 @@
  * application that performs simple file transfer. See README.txt for instructions on 
  * compilation and execution.
  * CODE SOURCES: http://stackoverflow.com/questions/12489/how-do-you-get-a-directory-listing-in-c
+ * http://stackoverflow.com/questions/12722904/how-to-use-struct-timeval-to-get-the-execution-time
  * http://pubs.opengroup.org/onlinepubs/007908775/xsh/dirent.h.html
  * http://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
  * http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
@@ -186,12 +187,12 @@ int main(int argc, char* argv[]){
                         waitForConnection = 1;
                         /*print the list of files and return to waiting for connections*/
                         char *requestedFileName = response;
-                        requestedFileName += 4;
+                        requestedFileName += 3;
                         printf("%s", requestedFileName);
                         int requestedFileNameLen = strlen(requestedFileName);
-                        /*DIR *directory;
+                        DIR *directory;
                         struct dirent *entry;
-                        int tempLen=0, existingLen=0;
+                        /*int tempLen=0, existingLen=0;
                         char* currentFileNames = NULL;
                         char* existingFileNames = NULL;
                         if ((directory = opendir (".")) != NULL) {
