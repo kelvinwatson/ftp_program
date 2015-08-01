@@ -30,6 +30,8 @@ public class FTPClient {
     public ServerSocket welcomeSocket;
     public Socket dataSocket;
     public BufferedReader fileDataFromServer;
+    public BufferedReader inFromClient;
+    public DataOutputStream outToClient;
     /*Default constructor
     *Pre-conditions: none
     *Post-conditions: initializes lengthStr to empty string
@@ -38,8 +40,11 @@ public class FTPClient {
   	  lengthStr="";
       inFromUser = null;
       outToServer = null;
+      outToClient = null;
       inFromServer = null;
+      inFromClient = null;
       clientSocket = null;
+      dataSocket = null;
       controlCommand = "";
       prompt = "\nPlease enter either -l or -g <FILENAME>: ";
     }
@@ -142,22 +147,37 @@ public class FTPClient {
 
     public void listenForDataConnection(){
       try{
-        String clientSentence;          
+        StringBuilder response = new StringBuilder();          
         String capitalizedSentence;  
+        int c;
         welcomeSocket = new ServerSocket(dataPortNumber);          
         while(true){             
-          Socket connectionSocket = welcomeSocket.accept();             
-          BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));             
-          DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());             
-          while((clientSentence = inFromClient.readLine()) != null){
-            //clientSentence = inFromClient.readLine();
-            System.out.println("Received: " + clientSentence);             
-          }                   
-          capitalizedSentence = clientSentence.toUpperCase() + '\n';             
-          outToClient.writeBytes(capitalizedSentence);          
+          dataSocket = welcomeSocket.accept();             
+          inFromClient = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));             
+          outToClient = new DataOutputStream(dataSocket.getOutputStream());             
+          while ((c = inFromClient.read()) != -1) {
+            System.out.print((char)c);
+            response.append((char)c);  
+          }
+          /*while((clientSentence = inFromClient.readLine()) != null){
+            //clientSentence = inFromClient.readLine(); //write to FILE
+            System.out.println(clientSentence);             
+          } */
+              
+          //capitalizedSentence = clientSentence.toUpperCase() + '\n';             
+          //outToClient.writeBytes(capitalizedSentence);          
         }
       }catch(IOException e){
 
+      }finally{
+        try{
+          inFromClient.close();
+          outToClient.close();
+          dataSocket.close();
+          welcomeSocket.close();
+        }catch(IOException e){
+
+        }
       }     
       /*try{
         welcomeSocket = new ServerSocket(dataPortNumber);
