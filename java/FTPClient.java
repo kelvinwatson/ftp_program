@@ -6,6 +6,7 @@
  * communication with server program
  * Sources: https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
  * http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
+ * http://stackoverflow.com/questions/7771303/getting-the-character-returned-by-read-in-bufferedreader
  */
 
 //http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
