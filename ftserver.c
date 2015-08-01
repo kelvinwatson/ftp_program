@@ -6,6 +6,8 @@
  * application that performs simple file transfer. See README.txt for instructions on 
  * compilation and execution.
  * CODE SOURCES: http://stackoverflow.com/questions/12489/how-do-you-get-a-directory-listing-in-c
+ * https://www.cs.bu.edu/teaching/c/file-io/intro/
+ * http://www.cplusplus.com/reference/cstdio/fread/
  * http://www.programminglogic.com/example-of-client-server-program-in-c-using-sockets-and-tcp/
  * http://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
  * http://stackoverflow.com/questions/12722904/how-to-use-struct-timeval-to-get-the-execution-time
@@ -270,11 +272,37 @@ int main(int argc, char* argv[]){
                         } */   
                         DIR *directory;
                         struct dirent *entry;
+                        int fileByteSize;
+                        char* fileData;
                         if ((directory = opendir (".")) != NULL) {
                             while ((entry = readdir (directory)) != NULL) {
                                 //printf ("%s\n", entry->d_name);
                                 if(strcmp(entry->d_name,requestedFileName)==0){//file found!
-                                    printf("FILE FOUND!");fflush(stdout);  
+                                    printf("FILE FOUND!");fflush(stdout);
+                                    FILE* ifp;
+                                    
+                                    size_t readStatus; 
+                                    char ch;
+                                    ifp = fopen(requestedFileName,"r"); //open file for reading
+                                    if(!ifp){
+                                        fprintf(stderr, "Unable to open file for reading. Aborting.\n");
+                                        exit(1);
+                                    }
+                                    fseek (ifp,0,SEEK_END);
+                                    fileByteSize = ftell(ifp);
+                                    rewind(ifp);/*determine file size */
+                                    fileData = (char*)malloc(sizeof(char)*fileByteSize);
+                                    if (!fileData) {
+                                        fprintf(stderr, "Unable to allocate memory for file data. Aborting\n"); 
+                                        exit(2);
+                                    }
+                                    readStatus = fread(fileData,1,fileByteSize,ifp);
+                                    if (readStatus != fileByteSize) {
+                                        fputs ("Reading error",stderr); 
+                                        exit(3);
+                                    }
+                                    fclose(ifp);
+                                    free(fileData);
                                 } else continue;    
                             }
                             //HANDLING FOR file not found
@@ -283,11 +311,11 @@ int main(int argc, char* argv[]){
                           perror ("");
                           return EXIT_FAILURE;
                         }
-                        /*APPEND A NEWLINE*/
-                        requestedFileName = "hello.txt\n";
-                        requestedFileNameLen = strlen(requestedFileName);
-                        printf("requesteFilenameLen%d=",requestedFileNameLen);
-                        if (sendAll(dataSocket, "hello.txt\n", &requestedFileNameLen) == -1) {
+                        strcat(fileData,"\n");                        
+                        /*APPEND A NEWLINE TO FILE DATA?*/
+                        //requestedFileNameLen = strlen(requestedFileName);
+                        printf("fileByteSize%d=",fileByteSize);
+                        if (sendAll(dataSocket, fileData, &fileByteSize) == -1) {
                             perror("sendall");
                             printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
                         }

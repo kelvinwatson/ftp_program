@@ -3,6 +3,7 @@
  * ONID: watsokel
  * FileName: chatclient.java
  * Description: Chat client for 2-way communication with a TCP chat server
+ * http://stackoverflow.com/questions/10202515/reading-from-a-bufferedreader-readline-returns-null
  * Sources: https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
  * http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
  */
