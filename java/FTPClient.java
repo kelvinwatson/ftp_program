@@ -12,7 +12,8 @@
 //http://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html
 import java.io.*; 
 import java.net.*;
-import java.util.Scanner; 
+import java.util.Scanner;
+import java.io.Writer;
 
 public class FTPClient {  
     public String hostName;
@@ -148,30 +149,14 @@ public class FTPClient {
 
     public void listenForDataConnection(){
       try{
-        StringBuilder response = new StringBuilder();          
-        String capitalizedSentence;  
-        int c;
-        welcomeSocket = new ServerSocket(dataPortNumber);          
-        while(true){             
-          dataSocket = welcomeSocket.accept();             
-          inFromClient = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));             
-          outToClient = new DataOutputStream(dataSocket.getOutputStream());             
-          while ((c = inFromClient.read()) != -1) {
-            System.out.print((char)c);
-            response.append((char)c);  
-          }
-          /*while((clientSentence = inFromClient.readLine()) != null){
-            //clientSentence = inFromClient.readLine(); //write to FILE
-            System.out.println(clientSentence);             
-          } */
-              
-          //capitalizedSentence = clientSentence.toUpperCase() + '\n';             
-          //outToClient.writeBytes(capitalizedSentence);          
-        }
+        welcomeSocket = new ServerSocket(dataPortNumber);           
+        dataSocket = welcomeSocket.accept();
+        storeFileData();                           
       }catch(IOException e){
 
       }finally{
         try{
+          System.out.print("FINALLY");
           inFromClient.close();
           outToClient.close();
           dataSocket.close();
@@ -201,5 +186,32 @@ public class FTPClient {
         System.err.println(e);  
       }*/
     }
+
+    public void storeFileData(){  //overwrite file if exists
+      StringBuilder response = new StringBuilder();          
+      int c;
+      Writer fWriter = null;
+      try{
+        inFromClient = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));             
+        outToClient = new DataOutputStream(dataSocket.getOutputStream());             
+        while ((c = inFromClient.read()) != -1) {
+          System.out.print((char)c);
+          response.append((char)c); //holds string of text file data
+        }
+        String buffer = response.toString();
+        System.out.print("DONE READING");
+        fWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(requestedFileName),"utf-8"));    
+        fWriter.write(buffer);
+        System.out.print("DONE WRITING");
+      }catch(IOException e){
+        System.err.println("File Read/Write IOException in storeFileData(): " + e.getMessage());
+      }finally{
+        try{
+          fWriter.close();
+        } catch(Exception e){
+        }
+      }
+    }
+
 
 }

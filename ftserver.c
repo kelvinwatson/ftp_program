@@ -302,7 +302,8 @@ int main(int argc, char* argv[]){
                                         exit(3);
                                     }
                                     fclose(ifp);
-                                    free(fileData);
+                                    break;
+                                    //free(fileData);
                                 } else continue;    
                             }
                             //HANDLING FOR file not found
@@ -311,7 +312,7 @@ int main(int argc, char* argv[]){
                           perror ("");
                           return EXIT_FAILURE;
                         }
-                        strcat(fileData,"\n");                        
+                        strcat(fileData, "\x1A");                        
                         /*APPEND A NEWLINE TO FILE DATA?*/
                         //requestedFileNameLen = strlen(requestedFileName);
                         printf("fileByteSize%d=",fileByteSize);
@@ -319,6 +320,8 @@ int main(int argc, char* argv[]){
                             perror("sendall");
                             printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
                         }
+                        //free(fileData);
+                        close(dataSocket);
                         //close(connectionSocket);*/
                         break;
                     }
