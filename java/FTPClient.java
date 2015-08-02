@@ -108,7 +108,7 @@ public class FTPClient {
     */
     public String receiveMessage(){
       String response = "";
-      System.out.println("in receiveMessage");
+      //System.out.println("in receiveMessage");
       try{
         while ((response = inFromServer.readLine())!= null) {
           //System.out.println(response);
@@ -131,15 +131,15 @@ public class FTPClient {
     public void displayFileList(){
       String sendAction = sendCommand(controlCommand); //returns either -l, -g, or ERR so client knows what to expect
       String message = receiveMessage(); //server should send an acknowledgement or ERROR
+      System.out.println("\nReceiving directory structure from " + hostName + ":" + portNumber);
       String fileList = replaceDelimiter(message);
       System.out.println(fileList);
-     
     }
 
     public void getFile(){
       String sendAction = sendCommand(controlCommand + " " + requestedFileName + " " + dataPortNumber + "\n"); //returns either -l, -g, or ERR so client knows what to expect
       //check if file already exists in the current directory
-      System.out.println("in GET file");
+      //System.out.println("in GET file");
       //String message = receiveMessage(); //server should send an acknowledgement or ERROR
       //System.out.println(message);
       listenForDataConnection();
@@ -154,7 +154,7 @@ public class FTPClient {
 
       }finally{
         try{
-          System.out.print("FINALLY");
+          //System.out.print("FINALLY");
           inFromClient.close();
           outToClient.close();
           dataSocket.close();
@@ -192,15 +192,20 @@ public class FTPClient {
       try{
         inFromClient = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));             
         outToClient = new DataOutputStream(dataSocket.getOutputStream());             
+        System.out.println("\n");
+        System.out.println("Receiving " + requestedFileName + " from " + hostName + ":" + dataPortNumber);
         while ((c = inFromClient.read()) != -1) {
-          System.out.print((char)c);
+          //System.out.print((char)c);
           response.append((char)c); //holds string of text file data
         }
         String buffer = response.toString();
-        System.out.print("DONE READING");
-        fWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(requestedFileName),"utf-8"));    
-        fWriter.write(buffer);
-        System.out.print("DONE WRITING");
+        if(buffer.equals("ERROR: FILE NOT FOUND. Exiting.")) {
+          System.out.println(buffer);
+        } else {
+          fWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(requestedFileName),"utf-8"));    
+          fWriter.write(buffer);
+          System.out.println("File write of " + requestedFileName + " complete.");
+        }
       }catch(IOException e){
         System.err.println("File Read/Write IOException in storeFileData(): " + e.getMessage());
       }finally{

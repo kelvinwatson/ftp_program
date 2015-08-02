@@ -29,15 +29,15 @@ public class ftclient{
 
     if(argv[2].equals("-l")){                       /*validate arg[2]*/
       client.controlCommand = argv[2];
-      System.out.println("CONTROL COMMAND = " + client.controlCommand);
+      //System.out.println("CONTROL COMMAND = " + client.controlCommand);
       client.dataPortNumber = Integer.parseInt(argv[3]);
     } else if(argv[2].equals("-g")){
       client.controlCommand = argv[2];
-      System.out.println("CONTROL COMMAND = " + client.controlCommand);
+      //System.out.println("CONTROL COMMAND = " + client.controlCommand);
       client.requestedFileName = argv[3];
-      System.out.println("REQUESTED FILENAME = " + client.requestedFileName);
+      //System.out.println("REQUESTED FILENAME = " + client.requestedFileName);
       client.dataPortNumber = Integer.parseInt(argv[4]);  /*save arg[1]*/
-      System.out.println("DATA PORT = " + client.dataPortNumber);
+      //System.out.println("DATA PORT = " + client.dataPortNumber);
     } else{
       System.out.println("ERROR: Invalid Control Command. Please try again.");
       System.exit(1);
@@ -52,7 +52,7 @@ public class ftclient{
       else if(client.controlCommand.equals("-g")){
         client.getFile();
       }
-      System.out.println("BACK IN MAIN!"); 
+      //System.out.println("BACK IN MAIN!"); 
       try { 
         client.clientSocket.close();
       }catch(IOException e){

@@ -112,7 +112,7 @@ int main(int argc, char* argv[]){
         
         char response[MESSAGE_SIZE], input[MESSAGE_SIZE];
         memset(response,0,MESSAGE_SIZE);
-        int charsRecv,sendStatus;
+        int charsRecv,sendStatus,dataSocket;
         
         while(1) {  //Accept Loop
             sin_size = sizeof clientAddr;
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]){
                       (int)((clientAddr.sin_addr.s_addr&0xFF0000)>>16),
                       (int)((clientAddr.sin_addr.s_addr&0xFF000000)>>24));*/
 
-                    int dataSocket = establishDataConnection(clientAddr);
+                    dataSocket = establishDataConnection(clientAddr);
                     
                     DIR *directory;
                     struct dirent *entry;
@@ -244,7 +244,7 @@ int main(int argc, char* argv[]){
                             fflush(stdout); 
                             char fileNotFound[] = "ERROR: FILE NOT FOUND. Exiting.";
                             sendData(dataSocket,fileNotFound);
-                            close(dataSocket);
+                            //close(dataSocket);
                             break;
                         }                      
                     } else {
@@ -256,7 +256,7 @@ int main(int argc, char* argv[]){
                         perror("sendall");
                         printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
                     }
-                    close(dataSocket);
+                    //close(dataSocket);
                     break;
                 }
                 else{
@@ -264,8 +264,10 @@ int main(int argc, char* argv[]){
                 }
             }
             if(waitForConnection==1){
+                if(dataSocket != -1){
+                    close(dataSocket);
+                }                
                 close(connectionSocket);
-                //printf("\nReady and waiting for new client connections on port %s...\n",portNumber);                  
                 break;
             }
             else{
