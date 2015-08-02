@@ -244,6 +244,7 @@ int main(int argc, char* argv[]){
                             fflush(stdout); 
                             char fileNotFound[] = "ERROR: FILE NOT FOUND. Exiting.";
                             sendData(dataSocket,fileNotFound);
+                            close(dataSocket);
                             break;
                         }                      
                     } else {
@@ -251,8 +252,6 @@ int main(int argc, char* argv[]){
                       return EXIT_FAILURE;
                     }
                     strcat(fileData, "\x1A");                        
-
-                    //printf("fileByteSize%d=",fileByteSize);
                     if (sendAll(dataSocket, fileData, &fileByteSize) == -1) {
                         perror("sendall");
                         printf("We only sent %d bytes because of the error!\n", requestedFileNameLen);
