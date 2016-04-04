@@ -1,6 +1,7 @@
-DOCUMENTATION FOR CS 372 PROJECT #2 (PROGRAMMING ASSIGNMENT #2)
----------------------------------------------------------------
-Programmed by KELVIN WATSON; OSU ID 932540242; ONID: watsokel
+#FTP PROGRAM (C SERVER, JAVA CLIENT)
+
+####CS 372 PROJECT #2 (PROGRAMMING ASSIGNMENT #2)
+#####Programmed by KELVIN WATSON; OSU ID 932540242; ONID: watsokel
 
 CONTENTS
 ---------------------
