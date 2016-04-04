@@ -1,4 +1,4 @@
-#FTP PROGRAM (C Server, JAVA Client)
+#FTP PROGRAM (C Server, Java Client)
 
 ####CS 372 PROJECT #2 (PROGRAMMING ASSIGNMENT #2)
 #####Programmed by KELVIN WATSON; OSU ID 932540242; ONID: watsokel
