@@ -23,21 +23,21 @@ Before proceeding, please ensure that you have the 4 required files:
 HOW TO COMPILE
 --------------
 1. Open two separate terminals e.g. PuTTY, one for the server, and one for the client.
-2. On the server terminal, enter:   "make" (without the quotes) (alternatively, you can also enter: "makeall")
-3. On the client terminal, enter:   "javac ftclient.java FTPClient.java" (without the quotes)
+2. On the server terminal, enter:   `make` (alternatively, you can also enter: `makeall`)
+3. On the client terminal, enter:   `javac ftclient.java FTPClient.java`
 
 
 HOW TO RUN THE PROGRAM
 ----------------------
-1. On the server terminal, enter  "ifconfig" (without the quotes) to obtain the OSU flip IP address that ftserver will be running on. 
+1. On the server terminal, enter  `ifconfig` to obtain the OSU flip IP address that ftserver will be running on. 
   * `flip1 = 128.193.54.226`
   * `flip2 = 128.193.54.7`
   * `flip3 = 128.193.54.10`
   
     (As an example execution, for the following steps, we will assume that ftserver is running on flip2, and will be using port number 30023, but you will enter the correct port number of your choosing)
 
-2. On the server terminal, execute the ftserver program by entering:  ./ftserver <SERVER_PORT> 
-(where <SERVER_PORT> is the desired port number for the FTP server program). For example, if ftserver will be using port 30023, you would enter: ./ftserver 30020
+2. On the server terminal, execute the ftserver program by entering:  `./ftserver <SERVER_PORT>` 
+(where `<SERVER_PORT>` is the desired port number for the FTP server program). For example, if ftserver will be using port 30023, you would enter: `./ftserver 30020`
 
 3. On the client terminal, there are two possible commands to execute the ftclient program:  
     i)    To list files in ftserve's directory, enter the command in the following format:
