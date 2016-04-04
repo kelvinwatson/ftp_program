@@ -47,7 +47,7 @@ HOW TO RUN THE PROGRAM
 
     ii)   To get (retrieve) a file from ftserve, enter the command in the following format:
           `java ftclient <FLIP_SERVER> <SERVER_PORT> -g <DATA_PORT>`
-          Using the example scenario above: java ftclient flip2 30023 -g hello.txt 30026
+          Using the example scenario above: `java ftclient flip2 30023 -g hello.txt 30026`
           because ftserver is running on flip2 and port 30023. hello.txt is ftclient's desired file, and 30026 is the data port which we will be used to receive the file on ftclient.
  
 4. Repeat step 3 on ftclient to continue getting lists or retrieving files from ftserver.
