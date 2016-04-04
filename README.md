@@ -30,9 +30,9 @@ HOW TO COMPILE
 HOW TO RUN THE PROGRAM
 ----------------------
 1. On the server terminal, enter  "ifconfig" (without the quotes) to obtain the OSU flip IP address that ftserver will be running on. 
-- 128.193.54.226  = flip1
-- 128.193.54.7    = flip2
-- 128.193.54.10   = flip3
+* `flip1 = 128.193.54.226`
+* `flip2 = 128.193.54.7`
+* `flip3 = 128.193.54.10`
   
     (As an example execution, for the following steps, we will assume that ftserver is running on flip2, and will be using port number 30023, but you will enter the correct port number of your choosing)
 
