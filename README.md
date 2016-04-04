@@ -41,16 +41,12 @@ HOW TO RUN THE PROGRAM
 
 3. On the client terminal, there are two possible commands to execute the ftclient program:  
     i)    To list files in ftserve's directory, enter the command in the following format:
-          java ftclient <FLIP_SERVER> <SERVER_PORT> -l <DATA_PORT>
-          
-          Using the example scenario above:  java ftclient flip2 30023 -l 30026
-          because ftserver is running on flip2 and port 30023. The 30026 is the data port which we will be used to receive the file names on ftclient.
-
-    -- or --
+          `java ftclient <FLIP_SERVER> <SERVER_PORT> -l <DATA_PORT>`
+          Using the example scenario above:  `java ftclient flip2 30023 -l 30026`
+          because ftserver is running on flip2 and port 30023. The 30026 is the data port which we will be used to receive the file names on ftclient. Alternatively,
 
     ii)   To get (retrieve) a file from ftserve, enter the command in the following format:
-          java ftclient <FLIP_SERVER> <SERVER_PORT> -g <DATA_PORT>
-          
+          `java ftclient <FLIP_SERVER> <SERVER_PORT> -g <DATA_PORT>`
           Using the example scenario above: java ftclient flip2 30023 -g hello.txt 30026
           because ftserver is running on flip2 and port 30023. hello.txt is ftclient's desired file, and 30026 is the data port which we will be used to receive the file on ftclient.
  
