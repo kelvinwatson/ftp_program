@@ -33,8 +33,7 @@ HOW TO RUN THE PROGRAM
   * `flip1 = 128.193.54.226`
   * `flip2 = 128.193.54.7`
   * `flip3 = 128.193.54.10`
-  
-    (As an example execution, for the following steps, we will assume that ftserver is running on flip2, and will be using port number 30023, but you will enter the correct port number of your choosing)
+  * As an example, for the following steps, we will assume that ftserver is running on flip2, and will be using port number 30023, but you will enter the correct port number of your choosing)
 
 2. On the server terminal, execute the ftserver program by entering:  `./ftserver <SERVER_PORT>` 
 (where `<SERVER_PORT>` is the desired port number for the FTP server program). For example, if ftserver will be using port 30023, you would enter: `./ftserver 30020`
